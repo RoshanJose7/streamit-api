@@ -1,17 +1,20 @@
 import cors from "cors";
 import express from "express";
+import { createServer } from "http";
 import bodyparser from "body-parser";
 
-import "./utils/socket";
+import io from "./utils/socket";
 import FilesRouter from "./routers/files";
 
-const server = express();
-const port: number = Number.parseInt(process.env.PORT!) || 8000;
+const app = express();
+const server = createServer(app);
+const port = process.env.PORT || 8000;
 
-server.use(cors());
-server.use(bodyparser.json());
-server.use("/files", FilesRouter);
+app.use(cors());
+app.use(bodyparser.json());
+app.use("/files", FilesRouter);
 
+io.listen(server);
 server.listen(port, () => {
   console.log("Server started at port " + port);
 });

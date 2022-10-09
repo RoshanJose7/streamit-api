@@ -42,7 +42,4 @@ io.on("connection", (socket) => {
   });
 });
 
-io.listen(port);
-console.log("Websockets server started at port " + port);
-
 export default io;
