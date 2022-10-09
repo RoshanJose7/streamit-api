@@ -5,7 +5,8 @@
   "author": "RoshanJose7",
   "license": "ISC",
   "scripts": {
-    "start": "npm run build && npx pm2 start build/server.js",
+    "prestart": "npm run build && npm install -g pm2",
+    "start": "pm2 start ./build/server.js",
     "dev": "NODE_ENV=dev nodemon",
     "build": "npx --package typescript tsc && npx tsc-alias"
   },
