@@ -1,5 +1,5 @@
 {
-  "name": "api",
+  "name": "sendr-api",
   "version": "2.0.0",
   "description": "TypeScript + Express API Server",
   "author": "RoshanJose7",
