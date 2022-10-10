@@ -1,7 +1,6 @@
 import { Server } from "socket.io";
 
 const usersInRoom = new Map<string, string[]>();
-const port: number = Number.parseInt(process.env.SOCKET_PORT!) || 8001;
 const io = new Server({
   path: "/socket.io",
   transports: ["websocket"],
