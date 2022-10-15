@@ -1,25 +1,12 @@
 import Multer from "multer";
 import { join } from "path";
+import { Router } from "express";
 import { mkdir } from "fs/promises";
 import { HttpStatusCode } from "axios";
-import { Request, Router } from "express";
 import { createReadStream, createWriteStream, existsSync } from "fs";
 
 import SockerServer from "../utils/socket";
-
-interface TransferData {
-  name: string;
-  size: number;
-  type: string;
-  room: string;
-  fileid: string;
-  sender: string;
-  transferid: string;
-}
-
-interface MulterRequest extends Request {
-  file: any;
-}
+import { MulterRequest, TransferData } from "../utils/constants";
 
 const multer = Multer();
 const FilesRouter = Router();

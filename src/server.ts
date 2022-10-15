@@ -10,7 +10,6 @@ import FilesRouter from "./routers/files";
 const app = express();
 const server = createServer(app);
 const port = process.env.PORT || 8080;
-console.log(port, "port");
 
 app.use(cors());
 app.use(bodyparser.json());

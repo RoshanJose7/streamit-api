@@ -1,10 +1,16 @@
 import { join } from "path";
-import { readdir } from "fs";
-import { rm } from "fs/promises";
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
+import { mkdir, rm } from "fs/promises";
+import { existsSync, readdir } from "fs";
 
-const TEMP_DIR = join(__dirname, "..", "..", "temp");
+import { TransferData } from "./constants";
+
+const senderSockets = new Map<string, Socket>();
 const usersInRoom = new Map<string, string[]>();
+const roomfiles = new Map<string, TransferData>();
+const incomingfiles = new Map<string, TransferData>();
+const TEMP_DIR = join(__dirname, "..", "..", "temp");
+
 const io = new Server({
   path: "/socket.io",
   transports: ["websocket"],
@@ -51,8 +57,60 @@ io.on("connection", (socket) => {
     });
   });
 
+  socket.on("file_create", (data: TransferData) => {
+    incomingfiles.set(data["transferid"], data);
+    senderSockets.set(data.sender, socket);
+
+    socket.broadcast.to(data.room).emit("notification", {
+      type: "new_file",
+      data,
+    });
+
+    socket.emit("ack_file_create", data.transferid);
+  });
+
+  socket.on("file_part", (data) => {
+    const filedata: TransferData = incomingfiles.get(data["transferid"]);
+
+    socket.broadcast.to(filedata.room).emit("file_part_recv", {
+      counter: data["counter"],
+      chunk: data["chunk"],
+    });
+
+    io.in(filedata.room).emit("notification", {
+      type: "percentage_update",
+      data: {
+        sender: filedata.sender,
+        fileid: filedata.fileid,
+        percentage: Number.parseInt(data["percentage"]),
+      },
+    });
+
+    socket.emit("ack_file_part", { ...data, chunkRecieved: true });
+  });
+
+  socket.on("file_complete", (data) => {
+    const filedata: TransferData = incomingfiles.get(data["transferid"]);
+
+    io.in(filedata.room).emit("notification", {
+      type: "percentage_update",
+      data: {
+        fileid: filedata.fileid,
+        percentage: 100,
+      },
+    });
+
+    socket.broadcast.to(filedata.room).emit("notification", {
+      type: "new_file_received",
+      data: filedata,
+    });
+
+    roomfiles.set(filedata.fileid, filedata);
+    incomingfiles.delete(data["transferid"]);
+  });
+
   socket.on("notification", (data) => {
-    socket.broadcast.in(data.room).emit("notification", data);
+    socket.broadcast.to(data.payload.room).emit("notification", data);
   });
 
   socket.on("disconnect", () => {
