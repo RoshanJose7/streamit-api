@@ -15,6 +15,9 @@ const io = new Server({
   path: "/socket.io",
   transports: ["websocket"],
   maxHttpBufferSize: 1e6,
+  cors: {
+    origin: "*",
+  }
 });
 
 io.on("connection", (socket) => {
