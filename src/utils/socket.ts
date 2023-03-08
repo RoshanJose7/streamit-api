@@ -1,14 +1,14 @@
 import { join } from "path";
+import { readdir } from "fs";
+import { rm } from "fs/promises";
 import { Server, Socket } from "socket.io";
-import { mkdir, rm } from "fs/promises";
-import { existsSync, readdir } from "fs";
 
 import { TransferData } from "./constants";
 
 const senderSockets = new Map<string, Socket>();
 const usersInRoom = new Map<string, string[]>();
-const roomfiles = new Map<string, TransferData>();
-const incomingfiles = new Map<string, TransferData>();
+const roomFiles = new Map<string, TransferData>();
+const incomingFiles = new Map<string, TransferData>();
 const TEMP_DIR = join(__dirname, "..", "..", "temp");
 
 const io = new Server({
@@ -58,7 +58,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("file_create", (data: TransferData) => {
-    incomingfiles.set(data["transferid"], data);
+    incomingFiles.set(data["transferid"], data);
     senderSockets.set(data.sender, socket);
 
     socket.broadcast.to(data.room).emit("notification", {
@@ -66,11 +66,14 @@ io.on("connection", (socket) => {
       data,
     });
 
+    console.log("Percentage: 0");
+    console.log(`TimeStamp: ${Date.now()}`);
+
     socket.emit("ack_file_create", data.transferid);
   });
 
   socket.on("file_part", (data) => {
-    const filedata: TransferData = incomingfiles.get(data["transferid"]);
+    const filedata: TransferData = incomingFiles.get(data["transferid"]);
 
     socket.broadcast.to(filedata.room).emit("file_part_recv", {
       counter: data["counter"],
@@ -86,11 +89,14 @@ io.on("connection", (socket) => {
       },
     });
 
-    socket.emit("ack_file_part", { ...data, chunkRecieved: true });
+    console.log(`Percentage: ${data["percentage"]}`);
+    console.log(`TimeStamp: ${Date.now()}`);
+
+    socket.emit("ack_file_part", { ...data, chunkReceived: true });
   });
 
   socket.on("file_complete", (data) => {
-    const filedata: TransferData = incomingfiles.get(data["transferid"]);
+    const filedata: TransferData = incomingFiles.get(data["transferid"]);
 
     io.in(filedata.room).emit("notification", {
       type: "percentage_update",
@@ -105,8 +111,11 @@ io.on("connection", (socket) => {
       data: filedata,
     });
 
-    roomfiles.set(filedata.fileid, filedata);
-    incomingfiles.delete(data["transferid"]);
+    console.log("Percentage: 100");
+    console.log(`TimeStamp: ${Date.now()}`);
+
+    roomFiles.set(filedata.fileid, filedata);
+    incomingFiles.delete(data["transferid"]);
   });
 
   socket.on("notification", (data) => {

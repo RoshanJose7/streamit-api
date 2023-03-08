@@ -1,6 +1,6 @@
 {
-  "name": "sendr-api",
-  "version": "2.0.0",
+  "name": "streamit-api",
+  "version": "3.0.0",
   "description": "TypeScript + Express API Server",
   "author": "RoshanJose7",
   "license": "ISC",
