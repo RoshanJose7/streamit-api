@@ -17,11 +17,15 @@ const io = new Server({
   maxHttpBufferSize: 1e6,
   cors: {
     origin: "*",
-  }
+  },
 });
 
 io.on("connection", (socket) => {
+  console.log(`New client connected: ${socket.id}`);
+
   socket.on("join_room", (data) => {
+    console.log(`${socket.id} joined ${data.room}`);
+
     if (usersInRoom.has(data.room)) {
       const users: string[] = usersInRoom.get(data.room)!;
       usersInRoom.set(data.room, [...users, socket.id]);
@@ -35,6 +39,8 @@ io.on("connection", (socket) => {
   });
 
   socket.on("leave_room", (data) => {
+    console.log(`${socket.id} left ${data.room}`);
+
     if (!usersInRoom.has(data.room)) usersInRoom.delete(data.room);
     socket.leave(data.room);
 
@@ -70,13 +76,15 @@ io.on("connection", (socket) => {
     });
 
     console.log("Percentage: 0");
-    console.log(`TimeStamp: ${Date.now()}`);
+    console.log(`TimeStamp (start): ${Date.now()}`);
 
-    socket.emit("ack_file_create", data.transferid);
+    socket.emit("ack_file_create", data);
   });
 
   socket.on("file_part", (data) => {
+    console.log(data.counter);
     const filedata: TransferData = incomingFiles.get(data["transferid"]);
+    console.log(filedata);
 
     socket.broadcast.to(filedata.room).emit("file_part_recv", {
       counter: data["counter"],
@@ -115,7 +123,7 @@ io.on("connection", (socket) => {
     });
 
     console.log("Percentage: 100");
-    console.log(`TimeStamp: ${Date.now()}`);
+    console.log(`TimeStamp (end): ${Date.now()}`);
 
     roomFiles.set(filedata.fileid, filedata);
     incomingFiles.delete(data["transferid"]);
